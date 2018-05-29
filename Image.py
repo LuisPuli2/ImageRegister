@@ -27,10 +27,22 @@ class Individuo:
 		self.desp_x = desp_x
 		self.desp_y = desp_y
 
+	# Método para imprimir en consola.
+	def toString(self):
+		return "["+ str(self.angulo) + "," + str(self.desp_x) +"," + str(self.desp_y) + "]"
+
 # Fin de clase Individuo.
 
 # El algoritmo genético.
 def AG ():
+
+	print("Padres: " + poblacion[padres[0]].toString() + ","+ poblacion[padres[1]].toString())
+	hijos = cruza(poblacion[padres[0]],poblacion[padres[1]])
+	print("Hijos: " + hijos[0].toString() +"," + hijos[1].toString())
+
+	source.rotate(poblacion[padres[0]].angulo).show()
+	source.rotate(poblacion[padres[1]].angulo).show()
+
 	return "Pene"
 
 # Genera un número aleatorio entre 0 y 359 para representar el ángulo.
@@ -102,13 +114,17 @@ def selecciona_individuo():
 		for i in range(0,len(ruleta)):
 			# Si el aleatorio cae dentro del rango
 			if ruleta[i] >= aleatorio:
-				padres[j] = i
-				print("Se selecciona a: " + str(poblacion[i].angulo))
-				# Detenemos el ciclo
-				break
-
-	source.rotate(poblacion[padres[0]].angulo).show()
-	source.rotate(poblacion[padres[1]].angulo).show()
+				# Para no seleccionar dos veces al mismo individuo
+				if j == 1 and padres[0] == i:
+					# Reiniciamos valores
+					j = 1
+					break
+				# Si no hay repeticiones
+				else:
+					padres[j] = i
+					print("Se selecciona a: " + str(poblacion[i].angulo))
+					# Detenemos el ciclo
+					break
 
 	return padres
 
@@ -147,20 +163,40 @@ def inicializa_imagenes ():
 		# Intentamos de nuevo.
 		inicializa_imagenes()
 
-# Aplica una mutación a un individuo en cualquiera de sus tres valores (Ángulo,Desp_X,Desp_Y).
-def mutacion (individuo):
+# Aplica el operador de cruza de dos individuos.
+def cruza (padre_1,padre_2):
+	# Se crea un número aleatorio para ver el punto de cruce.
+	aleatorio = random.randint(1,4)
+	# Modificamos el ángulo.
+	if aleatorio == 1:
+		hijo_1 = Individuo(padre_2.angulo,padre_1.desp_x,padre_1.desp_y)
+		hijo_2 = Individuo(padre_1.angulo,padre_2.desp_x,padre_2.desp_y)
+	# Modificamos el desplazamiento en x.
+	elif aleatorio == 2:
+		hijo_1 = Individuo(padre_1.angulo,padre_2.desp_x,padre_1.desp_y)
+		hijo_2 = Individuo(padre_2.angulo,padre_1.desp_x,padre_2.desp_y)
+	# Modificamos el desplazamiento en y.
+	else: 
+		hijo_1 = Individuo(padre_1.angulo,padre_1.desp_x,padre_2.desp_y)
+		hijo_2 = Individuo(padre_2.angulo,padre_2.desp_x,padre_1.desp_y)
+
+	return [hijo_1,hijo_2] 
+
+
+# Aplica el operador de mutación a un individuo en cualquiera de sus tres valores (Ángulo,Desp_X,Desp_Y).
+def muta (individuo):
 	# Creamos un número aleatorio entre 1 y 3 para saber que entrada modificar.
-	aleatorio = random.randint(1,3)
+	aleatorio = random.randint(1,4)
 	# Creamos un epsilon para realizar la mutación
 	epsilon = random.uniform(-1,-1)
 	# Modificamos el ángulo.
 	if aleatorio == 1:
 		individuo.angulo += epsilon
 	# Modificamos el desplazamiento en x.
-	else if aleatorio == 2
+	elif aleatorio == 2:
 		individuo.desp_x += epsilon
 	# Modificamos el desplazamiento en y.
-	else 
+	else: 
 		individuo.desp_y += epsilon
 
 # Método principal
