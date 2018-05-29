@@ -35,15 +35,45 @@ class Individuo:
 
 # El algoritmo genético.
 def AG ():
+	# Las generaciones que tendremos.
+	generaciones = 0
+	# Ciclo principal.
+	while generaciones < 40:
+		# Seleccionamos a los padres para cruzarlos.
+		padres = selecciona_padres()
+		# Los indices de los padres, para buscarlo en los arreglos.
+		i = padres[0]
+		j = padres[1]
+		# Debug.
+		# print("Padres: " + poblacion[i].toString() + ","+ poblacion[j].toString())
+		# Los cruzamos
+		hijos = cruza(poblacion[i],poblacion[j])
+		# Seleccionamos a los individuos para eliminarlos.
+		peores = selecciona_peores()
+		# Reutilizamos las variables de los índices.
+		i = peores[0]
+		j = peores[1]
+		# Debug.
+		# print("Eliminados: " + poblacion[i].toString() + ","+ poblacion[j].toString())
+		# Sustituimos a los nuevos pobladores (hijos).
+		poblacion[i] = hijos[0]
+		poblacion[j] = hijos[1]
+		# Se muta con probabilidad 1/5 a los nuevos pobladores.
+		if hayQueMutar():
+			# print("Antes de la mutación: " + poblacion[i].toString())
+			muta (poblacion[i])
+			# print("Después de la mutación: " + poblacion[i].toString())
+		# Lo mismo para el otro hijo
+		if hayQueMutar():
+			# print("Antes de la mutación: " + poblacion[j].toString())
+			muta (poblacion[j])
+			# print("Después de la mutación: " + poblacion[j].toString())
+		# Debug.
+		# print("Nuevos: " + poblacion[i].toString() + ","+ poblacion[j].toString())
+		# Aumentamos en uno la generación
+		generaciones += 1
+		Image.blend(target,source.rotate(generaciones*10),.5).show()
 
-	print("Padres: " + poblacion[padres[0]].toString() + ","+ poblacion[padres[1]].toString())
-	hijos = cruza(poblacion[padres[0]],poblacion[padres[1]])
-	print("Hijos: " + hijos[0].toString() +"," + hijos[1].toString())
-
-	source.rotate(poblacion[padres[0]].angulo).show()
-	source.rotate(poblacion[padres[1]].angulo).show()
-
-	return "Pene"
 
 # Genera un número aleatorio entre 0 y 359 para representar el ángulo.
 def angulo_aleatorio ():
@@ -56,6 +86,11 @@ def x_aleatorio ():
 # Genera un número aleatorio entre 0 y el tamaño horizontal de la imagen.
 def y_aleatorio ():
 	return random.randint(0,tam_vertical)
+
+# Regresa true con probabilidad 1/5
+def hayQueMutar():
+	aleatorio = random.randint(1,5)
+	return aleatorio == 1
 
 # Calcula la función fitness de un individuo.
 def fitness (individuo):
@@ -85,8 +120,18 @@ def diferencia (pixel_1,pixel_2):
 	# Regresa la diferencia al cuadrado
 	return diferencia**2
 
-# Selecciona un individuo utilizando implementación por ruleta.
-def selecciona_individuo():
+# Regresa el mejor individuo de la población.
+def selecciona_mejor():
+	best = 10000000
+	index = 0
+	for i in range(0,len(poblacion)):
+		fit = fitness(poblacion[i])
+		if fit < best:
+			best = fit
+			index = i
+	return i
+# Selecciona dos individuos para cruzarlos utilizando implementación por ruleta.
+def selecciona_padres():
 	# Un arreglo que simulará a la ruleta
 	ruleta = [None]*len(poblacion)
 	# Llenamos el arreglo.
@@ -106,27 +151,76 @@ def selecciona_individuo():
 	total = ruleta[len(ruleta)-1] 
 	# Los padres que vamos a regresar
 	padres = [None]*2
-	# Dos iteraciones.
-	for j in range(0,2):
-		# Generamos un número aleatorio entre 0  y el total, para seleccionar a los padres.
+	# Para el primer padre.
+	aleatorio = random.uniform(0,total)
+	# Vemos donde cae el aleatorio, para seleccionar al padre.	
+	for i in range(0,len(ruleta)):
+		# Si el aleatorio cae dentro del rango
+		if ruleta[i] >= aleatorio:
+			padres[0] = i
+			break
+	# Para el segundo padres
+	aleatorio = random.uniform(0,total)
+	# Vemos donde cae el aleatorio, para seleccionar al padres.	
+	for i in range(0,len(ruleta)):
+		# Si el aleatorio cae dentro del rango
+		if ruleta[i] >= aleatorio:
+			padres[1] = i
+			break
+	# Para evitar repetidos.
+	while(padres[1] == padres[0]):
 		aleatorio = random.uniform(0,total)
-		# Vemos donde cae el aleatorio, para seleccionar al padre.	
+		# Vemos donde cae el aleatorio, para seleccionar al padres.	
 		for i in range(0,len(ruleta)):
 			# Si el aleatorio cae dentro del rango
 			if ruleta[i] >= aleatorio:
-				# Para no seleccionar dos veces al mismo individuo
-				if j == 1 and padres[0] == i:
-					# Reiniciamos valores
-					j = 1
-					break
-				# Si no hay repeticiones
-				else:
-					padres[j] = i
-					print("Se selecciona a: " + str(poblacion[i].angulo))
-					# Detenemos el ciclo
-					break
+				padres[1] = i
+				break
 
 	return padres
+
+# Selecciona dos individuos para eliminarlos utilizando implementación por ruleta.
+def selecciona_peores():
+	# Un arreglo que simulará a la ruleta
+	ruleta = [None]*len(poblacion)
+	# Llenamos el arreglo.
+	for i in range(0,len(ruleta)):
+		# Para no salirse del arreglo.
+		if i != 0:
+			ruleta[i] = fitness(poblacion[i]) + ruleta[i-1]
+		else:
+			ruleta[i] = fitness(poblacion[i])
+
+	# Guardará la suma de cada entrada de la ruleta
+	total = ruleta[len(ruleta)-1] 
+	# Los padres que vamos a regresar
+	peores = [None]*2
+	# Para el primer padre.
+	aleatorio = random.uniform(0,total)
+	# Vemos donde cae el aleatorio, para seleccionar al padre.	
+	for i in range(0,len(ruleta)):
+		# Si el aleatorio cae dentro del rango
+		if ruleta[i] >= aleatorio:
+			peores[0] = i
+			break
+	# Para el segundo peores
+	aleatorio = random.uniform(0,total)
+	# Vemos donde cae el aleatorio, para seleccionar al peores.	
+	for i in range(0,len(ruleta)):
+		# Si el aleatorio cae dentro del rango
+		if ruleta[i] >= aleatorio:
+			peores[1] = i
+			break
+	# Para evitar repetidos.
+	while(peores[1] == peores[0]):
+		aleatorio = random.uniform(0,total)
+		# Vemos donde cae el aleatorio, para seleccionar al peores.	
+		for i in range(0,len(ruleta)):
+			# Si el aleatorio cae dentro del rango
+			if ruleta[i] >= aleatorio:
+				peores[1] = i
+				break
+	return peores
 
 # Inicializa una población aleatoria de n individuos.
 def inicializa_poblacion (n):
@@ -186,7 +280,7 @@ def cruza (padre_1,padre_2):
 # Aplica el operador de mutación a un individuo en cualquiera de sus tres valores (Ángulo,Desp_X,Desp_Y).
 def muta (individuo):
 	# Creamos un número aleatorio entre 1 y 3 para saber que entrada modificar.
-	aleatorio = random.randint(1,4)
+	aleatorio = random.randint(1,3)
 	# Creamos un epsilon para realizar la mutación
 	epsilon = random.uniform(-1,-1)
 	# Modificamos el ángulo.
@@ -199,16 +293,21 @@ def muta (individuo):
 	else: 
 		individuo.desp_y += epsilon
 
+# Aplica el operador de reemplazo.
+def remplaza (hijo_1,hijo_2):
+	print("Dick")
+
+
 # Método principal
 def main ():
 	# Abre imágenes
 	inicializa_imagenes()
 	# Crea la población
-	inicializa_poblacion(40)
+	inicializa_poblacion(30)
 	# Debug
-	selecciona_individuo()
-
-
+	selecciona_padres()
+	# Algoritmo Genpetico
+	AG();
 
 
 if __name__ == '__main__':
